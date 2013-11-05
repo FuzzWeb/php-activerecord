@@ -43,6 +43,10 @@ abstract class Connection
 	 */
 	private $logger;
 	/**
+	 * The parameters used to construct the underlying PDO object.
+	 */
+	private $pdo_parameters;
+	/**
 	 * The name of the protocol that is used.
 	 * @var string
 	 */
@@ -236,10 +240,24 @@ abstract class Connection
 			else
 				$host = "unix_socket=$info->host";
 
-			$this->connection = new PDO("$info->protocol:$host;dbname=$info->db", $info->user, $info->pass, static::$PDO_OPTIONS);
+			$this->pdo_parameters = array("$info->protocol:$host;dbname=$info->db", $info->user, $info->pass, static::$PDO_OPTIONS);
+
+			$this->connect();
 		} catch (PDOException $e) {
 			throw new DatabaseException($e);
 		}
+	}
+
+	public function connect()
+	{
+		if (!isset($this->connection))
+			$this->connection = new PDO($this->pdo_parameters[0], $this->pdo_parameters[1], $this->pdo_parameters[2], $this->pdo_parameters[3]);
+	}
+
+	public function drop()
+	{
+		if (isset($this->connection))
+			unset($this->connection);
 	}
 
 	/**
